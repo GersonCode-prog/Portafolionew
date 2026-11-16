@@ -4,8 +4,21 @@ import { USUARIO_GITHUB } from '../config';
 
 const actividad = await getEntry('actividad', 'ultimo-anio');
 
-// Ordena los días y los agrupa en semanas (columnas de domingo a sábado)
-const dias = actividad ? [...actividad.data.dias].sort((a, b) => a.fecha.localeCompare(b.fecha)) : [];
+// Cuántos meses mostrar en el cuadro
+const MESES = 3;
+
+// Ordena los días y se queda solo con los últimos MESES meses
+const todos = actividad ? [...actividad.data.dias].sort((a, b) => a.fecha.localeCompare(b.fecha)) : [];
+let dias = todos;
+if (todos.length) {
+  const corte = new Date(`${todos[todos.length - 1].fecha}T00:00:00Z`);
+  corte.setUTCMonth(corte.getUTCMonth() - MESES);
+  const desde = corte.toISOString().slice(0, 10);
+  dias = todos.filter((d) => d.fecha > desde);
+}
+const total = dias.reduce((suma, d) => suma + d.cantidad, 0);
+
+// Agrupa los días en semanas (columnas de domingo a sábado)
 const semanas: (typeof dias[number] | null)[][] = [];
 if (dias.length) {
   const primerDia = new Date(`${dias[0].fecha}T00:00:00Z`).getUTCDay();
@@ -52,8 +65,9 @@ const formatoFecha = (f: string) =>
     </div>
 
     <div class="ventana revelar">
+      <div class="cuerpo">
       <div class="resumen">
-        <div class="dato"><p class="numero">{actividad.data.total}</p><p class="etq">Contribuciones en el último año</p></div>
+        <div class="dato"><p class="numero">{total}</p><p class="etq">Contribuciones en {MESES} meses</p></div>
         <div class="dato"><p class="numero">🔥 {rachaActual}</p><p class="etq">Racha actual (días)</p></div>
         <div class="dato"><p class="numero">⚡ {rachaMax}</p><p class="etq">Racha más larga</p></div>
         <div class="dato"><p class="numero">🗓️ {diasActivos}</p><p class="etq">Días entrenando</p></div>
@@ -78,6 +92,7 @@ const formatoFecha = (f: string) =>
           </div>
         </div>
       </div>
+      </div>
 
       <div class="pie">
         <p class="mejor">
@@ -94,23 +109,16 @@ const formatoFecha = (f: string) =>
   </section>
 )}
 
-<script>
-  // En pantallas pequeñas, muestra primero los meses más recientes
-  document.addEventListener('astro:page-load', () => {
-    const scroll = document.querySelector<HTMLElement>('.calendario-scroll');
-    if (scroll) scroll.scrollLeft = scroll.scrollWidth;
-  });
-</script>
-
 <style>
-  .resumen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.75rem; }
+  .cuerpo { display: grid; grid-template-columns: 1fr auto; gap: 2rem; align-items: center; }
+  .resumen { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; order: 2; }
   .dato { text-align: center; padding: .9rem .5rem; background: rgba(0, 0, 0, .3); border: 1px solid var(--borde); border-radius: 8px; }
   .numero { font-family: var(--fuente-titulo); font-weight: 700; font-size: 1.8rem; color: var(--oro); line-height: 1.2; }
   .etq { font-family: var(--fuente-mono); font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--texto-suave); }
 
   .calendario-scroll { overflow-x: auto; padding-bottom: .5rem; }
   .calendario {
-    --celda: 13px; --espacio: 3px;
+    --celda: 22px; --espacio: 4px;
     display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto 1fr;
     gap: .35rem .5rem; width: max-content; margin-inline: auto;
   }
@@ -120,11 +128,11 @@ const formatoFecha = (f: string) =>
     font-family: var(--fuente-mono); font-size: .68rem; color: var(--texto-suave);
   }
   .meses span { white-space: nowrap; }
-  .dias-semana { display: grid; grid-template-rows: repeat(7, var(--celda)); gap: var(--espacio); font-family: var(--fuente-mono); font-size: .62rem; color: var(--texto-suave); line-height: var(--celda); }
+  .dias-semana { display: grid; grid-template-rows: repeat(7, var(--celda)); gap: var(--espacio); font-family: var(--fuente-mono); font-size: .68rem; color: var(--texto-suave); line-height: var(--celda); }
   .cuadricula { display: flex; gap: var(--espacio); }
   .semana { display: grid; grid-template-rows: repeat(7, var(--celda)); gap: var(--espacio); }
 
-  .celda { width: var(--celda, 13px); height: var(--celda, 13px); border-radius: 3px; display: inline-block; transition: transform .1s; }
+  .celda { width: var(--celda, 13px); height: var(--celda, 13px); border-radius: 4px; display: inline-block; transition: transform .1s; }
   .cuadricula .celda:hover { transform: scale(1.4); outline: 1px solid #fff; }
   .vacia { background: transparent; }
   .n0 { background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .04); }
@@ -141,5 +149,9 @@ const formatoFecha = (f: string) =>
   .leyenda span:last-child { margin-left: 4px; }
   .ver-github { display: inline-block; margin-top: 1rem; font-family: var(--fuente-titulo); font-weight: 700; color: var(--oro); text-transform: uppercase; letter-spacing: .06em; font-size: .9rem; }
 
-  @media (max-width: 720px) { .resumen { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 900px) {
+    .cuerpo { grid-template-columns: 1fr; }
+    .resumen { order: 0; }
+  }
+  @media (max-width: 480px) { .calendario { --celda: 14px; --espacio: 3px; } }
 </style>
