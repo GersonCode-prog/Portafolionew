@@ -1,0 +1,145 @@
+---
+import { getEntry } from 'astro:content';
+import { USUARIO_GITHUB } from '../config';
+
+const actividad = await getEntry('actividad', 'ultimo-anio');
+
+// Ordena los días y los agrupa en semanas (columnas de domingo a sábado)
+const dias = actividad ? [...actividad.data.dias].sort((a, b) => a.fecha.localeCompare(b.fecha)) : [];
+const semanas: (typeof dias[number] | null)[][] = [];
+if (dias.length) {
+  const primerDia = new Date(`${dias[0].fecha}T00:00:00Z`).getUTCDay();
+  let semana: (typeof dias[number] | null)[] = Array(primerDia).fill(null);
+  for (const d of dias) {
+    semana.push(d);
+    if (semana.length === 7) { semanas.push(semana); semana = []; }
+  }
+  if (semana.length) semanas.push([...semana, ...Array(7 - semana.length).fill(null)]);
+}
+
+// Etiquetas de meses: se muestran en la primera semana de cada mes
+const nombresMes = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+const etiquetasMes = semanas.map((s, i) => {
+  const dia = s.find((d) => d);
+  if (!dia) return '';
+  const mes = Number(dia.fecha.slice(5, 7)) - 1;
+  const mesAnterior = i > 0 ? Number(semanas[i - 1].find((d) => d)?.fecha.slice(5, 7)) - 1 : -1;
+  return mes !== mesAnterior ? nombresMes[mes] : '';
+});
+
+// Estadísticas: racha más larga, racha actual y mejor día
+let rachaMax = 0, rachaTemp = 0;
+for (const d of dias) {
+  rachaTemp = d.cantidad > 0 ? rachaTemp + 1 : 0;
+  rachaMax = Math.max(rachaMax, rachaTemp);
+}
+let rachaActual = 0;
+for (let i = dias.length - 1; i >= 0; i--) {
+  if (dias[i].cantidad > 0) rachaActual++;
+  else if (i === dias.length - 1) continue; // si hoy aún no hay commits, no rompe la racha
+  else break;
+}
+const mejorDia = dias.reduce((max, d) => (d.cantidad > (max?.cantidad ?? 0) ? d : max), null as typeof dias[number] | null);
+const diasActivos = dias.filter((d) => d.cantidad > 0).length;
+
+const formatoFecha = (f: string) =>
+  new Date(`${f}T00:00:00Z`).toLocaleDateString('es-GT', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+---
+{actividad && (
+  <section class="seccion contenedor" id="actividad">
+    <div class="titulo-seccion revelar">
+      <h2>Registro de entrenamiento</h2><span class="jp">訓練記録</span>
+    </div>
+
+    <div class="ventana revelar">
+      <div class="resumen">
+        <div class="dato"><p class="numero">{actividad.data.total}</p><p class="etq">Contribuciones en el último año</p></div>
+        <div class="dato"><p class="numero">🔥 {rachaActual}</p><p class="etq">Racha actual (días)</p></div>
+        <div class="dato"><p class="numero">⚡ {rachaMax}</p><p class="etq">Racha más larga</p></div>
+        <div class="dato"><p class="numero">🗓️ {diasActivos}</p><p class="etq">Días entrenando</p></div>
+      </div>
+
+      <div class="calendario-scroll">
+        <div class="calendario" style={`--semanas:${semanas.length}`}>
+          <div class="meses">
+            {etiquetasMes.map((m) => <span>{m}</span>)}
+          </div>
+          <div class="dias-semana">
+            <span></span><span>Lun</span><span></span><span>Mié</span><span></span><span>Vie</span><span></span>
+          </div>
+          <div class="cuadricula">
+            {semanas.map((s) => (
+              <div class="semana">
+                {s.map((d) => d
+                  ? <span class={`celda n${d.nivel}`} title={`${d.cantidad} contribución${d.cantidad === 1 ? '' : 'es'} · ${formatoFecha(d.fecha)}`}></span>
+                  : <span class="celda vacia"></span>)}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div class="pie">
+        <p class="mejor">
+          {mejorDia && mejorDia.cantidad > 0 && <>⭐ Mejor día: <strong>{mejorDia.cantidad}</strong> contribuciones el {formatoFecha(mejorDia.fecha)}</>}
+        </p>
+        <div class="leyenda">
+          <span>Menos</span>
+          <span class="celda n0"></span><span class="celda n1"></span><span class="celda n2"></span><span class="celda n3"></span><span class="celda n4"></span>
+          <span>Más</span>
+        </div>
+      </div>
+      <a href={`https://github.com/${USUARIO_GITHUB}`} target="_blank" rel="noopener" class="ver-github">Ver perfil en GitHub ↗</a>
+    </div>
+  </section>
+)}
+
+<script>
+  // En pantallas pequeñas, muestra primero los meses más recientes
+  document.addEventListener('astro:page-load', () => {
+    const scroll = document.querySelector<HTMLElement>('.calendario-scroll');
+    if (scroll) scroll.scrollLeft = scroll.scrollWidth;
+  });
+</script>
+
+<style>
+  .resumen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.75rem; }
+  .dato { text-align: center; padding: .9rem .5rem; background: rgba(0, 0, 0, .3); border: 1px solid var(--borde); border-radius: 8px; }
+  .numero { font-family: var(--fuente-titulo); font-weight: 700; font-size: 1.8rem; color: var(--oro); line-height: 1.2; }
+  .etq { font-family: var(--fuente-mono); font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--texto-suave); }
+
+  .calendario-scroll { overflow-x: auto; padding-bottom: .5rem; }
+  .calendario {
+    --celda: 13px; --espacio: 3px;
+    display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto 1fr;
+    gap: .35rem .5rem; width: max-content; margin-inline: auto;
+  }
+  .meses {
+    grid-column: 2; display: grid;
+    grid-template-columns: repeat(var(--semanas), calc(var(--celda) + var(--espacio)));
+    font-family: var(--fuente-mono); font-size: .68rem; color: var(--texto-suave);
+  }
+  .meses span { white-space: nowrap; }
+  .dias-semana { display: grid; grid-template-rows: repeat(7, var(--celda)); gap: var(--espacio); font-family: var(--fuente-mono); font-size: .62rem; color: var(--texto-suave); line-height: var(--celda); }
+  .cuadricula { display: flex; gap: var(--espacio); }
+  .semana { display: grid; grid-template-rows: repeat(7, var(--celda)); gap: var(--espacio); }
+
+  .celda { width: var(--celda, 13px); height: var(--celda, 13px); border-radius: 3px; display: inline-block; transition: transform .1s; }
+  .cuadricula .celda:hover { transform: scale(1.4); outline: 1px solid #fff; }
+  .vacia { background: transparent; }
+  .n0 { background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .04); }
+  .n1 { background: #3d2f8f; }
+  .n2 { background: #7c5cff; }
+  .n3 { background: #ff5fa2; box-shadow: 0 0 4px rgba(255, 95, 162, .6); }
+  .n4 { background: #ffcc4d; box-shadow: 0 0 6px rgba(255, 204, 77, .8); }
+
+  .pie { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 1.25rem; }
+  .mejor { color: var(--texto-suave); font-size: .9rem; }
+  .mejor strong { color: var(--oro); }
+  .leyenda { display: flex; align-items: center; gap: 4px; font-family: var(--fuente-mono); font-size: .7rem; color: var(--texto-suave); }
+  .leyenda span:first-child { margin-right: 4px; }
+  .leyenda span:last-child { margin-left: 4px; }
+  .ver-github { display: inline-block; margin-top: 1rem; font-family: var(--fuente-titulo); font-weight: 700; color: var(--oro); text-transform: uppercase; letter-spacing: .06em; font-size: .9rem; }
+
+  @media (max-width: 720px) { .resumen { grid-template-columns: repeat(2, 1fr); } }
+</style>

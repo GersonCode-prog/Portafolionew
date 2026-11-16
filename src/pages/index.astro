@@ -5,6 +5,7 @@ import PantallaTitulo from '../components/PantallaTitulo.astro';
 import Estado from '../components/Estado.astro';
 import Dialogo from '../components/Dialogo.astro';
 import Logros from '../components/Logros.astro';
+import Actividad from '../components/Actividad.astro';
 import TarjetaMision from '../components/TarjetaMision.astro';
 import { getCollection } from 'astro:content';
 
@@ -17,6 +18,7 @@ const destacadas = (await getCollection('misiones'))
   <PantallaTitulo />
   <Dialogo />
   <Estado />
+  <Actividad />
 
   <section class="seccion contenedor">
     <div class="encabezado">

@@ -107,4 +107,29 @@ const misiones = defineCollection({
   }),
 });
 
-export const collections = { perfil, misiones };
+// ---------- Contribuciones (cuadro de actividad) ----------
+const API_CONTRIBUCIONES = process.env.CONTRIB_API ?? 'https://github-contributions-api.jogruber.de';
+
+const actividad = defineCollection({
+  loader: async () => {
+    try {
+      const r = await fetch(`${API_CONTRIBUCIONES}/v4/${USUARIO_GITHUB}?y=last`);
+      if (!r.ok) throw new Error(`respondió ${r.status}`);
+      const datos = await r.json();
+      return [{
+        id: 'ultimo-anio',
+        total: datos.total?.lastYear ?? 0,
+        dias: datos.contributions.map((d: any) => ({ fecha: d.date, cantidad: d.count, nivel: d.level })),
+      }];
+    } catch (e) {
+      console.warn(`⚠️  No se pudieron cargar las contribuciones: ${(e as Error).message}`);
+      return [];
+    }
+  },
+  schema: z.object({
+    total: z.number(),
+    dias: z.array(z.object({ fecha: z.string(), cantidad: z.number(), nivel: z.number() })),
+  }),
+});
+
+export const collections = { perfil, misiones, actividad };
