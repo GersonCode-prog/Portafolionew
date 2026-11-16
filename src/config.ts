@@ -4,6 +4,10 @@
 
 export const USUARIO_GITHUB = 'GersonCode-prog';
 
+// Repos que NO quieres mostrar como misiones (escribe el nombre exacto del repo)
+// Ejemplo: ['prueba', 'login']
+export const reposOcultos: string[] = [];
+
 export const jugador = {
   nombre: 'Gerson Batún',
   nombreJapones: 'ゲルソン',          // "Gerson" en katakana

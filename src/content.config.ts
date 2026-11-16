@@ -1,6 +1,6 @@
 import { defineCollection } from 'astro:content';
 import { z } from 'astro/zod';
-import { USUARIO_GITHUB } from './config';
+import { USUARIO_GITHUB, reposOcultos } from './config';
 
 const API = process.env.GITHUB_API ?? 'https://api.github.com';
 const TOKEN = process.env.GITHUB_TOKEN; // Opcional: sube el límite de 60 a 5000 consultas por hora
@@ -58,7 +58,9 @@ const misiones = defineCollection({
       const repos: any[] = await r.json();
 
       const validos = repos.filter(
-        (x) => !x.fork && !x.archived && x.name.toLowerCase() !== USUARIO_GITHUB.toLowerCase(),
+        (x) => !x.fork && !x.archived
+          && x.name.toLowerCase() !== USUARIO_GITHUB.toLowerCase()
+          && !reposOcultos.some((o) => o.toLowerCase() === x.name.toLowerCase()),
       );
 
       return Promise.all(validos.map(async (x) => {

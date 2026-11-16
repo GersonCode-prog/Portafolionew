@@ -12,6 +12,9 @@ const coloresLenguaje: Record<string, string> = {
   'C#': '#178600',
   Java: '#b07219',
   Astro: '#ff5d01',
+  Dart: '#00b4ab',
+  Vue: '#41b883',
+  'Jupyter Notebook': '#da5b0b',
 };
 
 export const colorLenguaje = (lenguaje?: string | null) =>
