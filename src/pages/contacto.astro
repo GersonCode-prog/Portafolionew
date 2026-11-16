@@ -1,0 +1,109 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { USUARIO_GITHUB } from '../config';
+// Correo que se muestra en la página de contacto
+const correo = 'batunsuriano7@gmail.com';
+---
+<Layout titulo="Party" descripcion="Invita a Gerson a tu party: contacto y colaboraciones.">
+  <section class="seccion contenedor contacto">
+    <div>
+      <div class="titulo-seccion"><h2>Invitar a la party</h2><span class="jp">パーティー</span></div>
+      <p class="intro">¿Tienes una misión, un proyecto o una idea? Envía tu invitación y prepararé mi equipo.</p>
+
+      <div class="ventana canales">
+        <button class="canal" id="copiar-correo" data-correo={correo}>
+          <span class="icono">✉️</span>
+          <span><span class="etq">Correo</span><span class="valor">{correo}</span></span>
+          <span class="accion" id="texto-copiar">Copiar</span>
+        </button>
+        <a class="canal" href={`https://github.com/${USUARIO_GITHUB}`} target="_blank" rel="noopener">
+          <span class="icono">🐙</span>
+          <span><span class="etq">GitHub</span><span class="valor">{USUARIO_GITHUB}</span></span>
+          <span class="accion">↗</span>
+        </a>
+      </div>
+    </div>
+
+    <form id="form-party" class="ventana" novalidate>
+      <p class="etq">Formulario de invitación</p>
+      <label>Nombre del jugador<input type="text" name="nombre" required placeholder="Tu nombre" /></label>
+      <label>Correo<input type="email" name="correo" required placeholder="tu@correo.com" /></label>
+      <label>Tipo de misión
+        <select name="tipo">
+          <option>Proyecto web</option>
+          <option>Colaboración</option>
+          <option>Oferta de trabajo</option>
+          <option>Solo quiero saludar</option>
+        </select>
+      </label>
+      <label>Mensaje<textarea name="mensaje" rows="5" required placeholder="Describe tu misión..."></textarea></label>
+      <button type="submit" class="boton">Enviar invitación ▶</button>
+      <p id="aviso" class="aviso" role="status"></p>
+    </form>
+  </section>
+</Layout>
+
+<script>
+  function iniciarParty() {
+    const btn = document.getElementById('copiar-correo');
+    const txt = document.getElementById('texto-copiar');
+    btn?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(btn.dataset.correo || '');
+        if (txt) txt.textContent = '¡Copiado!';
+        setTimeout(() => { if (txt) txt.textContent = 'Copiar'; }, 2000);
+      } catch (e) {}
+    });
+
+    // Por ahora solo valida. Más adelante lo conectamos a Formspree.
+    const form = document.getElementById('form-party') as HTMLFormElement | null;
+    const aviso = document.getElementById('aviso');
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!form.checkValidity()) {
+        form.classList.add('validado');
+        if (aviso) { aviso.textContent = '⚠️ Faltan datos en la invitación.'; aviso.className = 'aviso error'; }
+        return;
+      }
+      const nombre = new FormData(form).get('nombre');
+      if (aviso) { aviso.textContent = `✨ ¡${nombre} se unió a la party! Te responderé pronto.`; aviso.className = 'aviso exito'; }
+      (window as any).sonar?.(1046, 0.25);
+      form.reset();
+      form.classList.remove('validado');
+    });
+  }
+  document.addEventListener('astro:page-load', iniciarParty);
+</script>
+
+<style>
+  .contacto { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; padding-top: 8rem; align-items: start; }
+  .intro { color: var(--texto-suave); margin: -1rem 0 2rem; font-size: 1.05rem; }
+  .canales { display: grid; gap: .75rem; }
+  .canal {
+    display: flex; align-items: center; gap: 1rem; width: 100%; padding: .9rem 1rem;
+    background: rgba(0, 0, 0, .3); border: 2px solid var(--borde); border-radius: 8px;
+    color: var(--texto); font: inherit; text-align: left; cursor: pointer; transition: border-color .15s;
+  }
+  .canal:hover { border-color: var(--oro); }
+  .icono { font-size: 1.5rem; }
+  .etq { display: block; font-family: var(--fuente-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .15em; color: var(--texto-suave); }
+  .valor { display: block; font-weight: 600; }
+  .accion { margin-left: auto; color: var(--oro); font-weight: 700; font-size: .85rem; }
+
+  form { display: grid; gap: 1rem; }
+  label { display: grid; gap: .35rem; font-family: var(--fuente-titulo); font-weight: 700; text-transform: uppercase; font-size: .85rem; letter-spacing: .06em; }
+  input, textarea, select {
+    font: inherit; font-family: var(--fuente); text-transform: none; letter-spacing: normal; font-weight: 400; font-size: 1rem;
+    padding: .7rem .9rem; color: var(--texto); background: rgba(0, 0, 0, .35);
+    border: 2px solid var(--borde); border-radius: 6px; resize: vertical;
+  }
+  select option { background: var(--fondo-2); }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--oro); box-shadow: 0 0 12px rgba(255, 204, 77, .25); }
+  .validado :invalid { border-color: var(--rojo); }
+  .boton { justify-self: start; }
+  .aviso { font-weight: 600; min-height: 1.4em; }
+  .aviso.exito { color: var(--verde); }
+  .aviso.error { color: var(--rojo); }
+
+  @media (max-width: 860px) { .contacto { grid-template-columns: 1fr; } }
+</style>

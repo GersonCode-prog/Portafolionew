@@ -1,0 +1,88 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import TarjetaMision from '../../components/TarjetaMision.astro';
+import { getCollection } from 'astro:content';
+import { colorLenguaje } from '../../utils';
+
+const misiones = (await getCollection('misiones'))
+  .sort((a, b) => b.data.actualizado.valueOf() - a.data.actualizado.valueOf());
+const lenguajes = [...new Set(misiones.map((m) => m.data.lenguaje ?? 'Otro'))];
+---
+<Layout titulo="Misiones" descripcion="Todos los proyectos de Gerson en GitHub, como misiones de RPG.">
+  <section class="seccion contenedor cabecera">
+    <div class="titulo-seccion"><h2>Tablón de misiones</h2><span class="jp">クエストボード</span></div>
+    <p class="intro">Cada repositorio de GitHub es una misión. Filtra por elemento o busca por nombre.</p>
+
+    <div class="controles ventana">
+      <input type="search" id="buscar" placeholder="🔍 Buscar misión..." aria-label="Buscar misión" />
+      <div class="filtros">
+        <button class="filtro activo" data-filtro="todos">Todos <span>{misiones.length}</span></button>
+        {lenguajes.map((l) => (
+          <button class="filtro" data-filtro={l} style={`--color:${colorLenguaje(l)}`}>
+            <span class="punto"></span>{l}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    {misiones.length > 0
+      ? <div class="rejilla" id="rejilla">{misiones.map((m) => <TarjetaMision mision={m} />)}</div>
+      : <p class="vacio ventana">No se pudieron cargar las misiones de GitHub. Intenta de nuevo más tarde.</p>}
+    <p class="vacio sin-resultados" id="sin-resultados" hidden>Ninguna misión coincide... 👻</p>
+  </section>
+</Layout>
+
+<script>
+  function iniciarTablon() {
+    const buscar = document.getElementById('buscar') as HTMLInputElement | null;
+    const botones = document.querySelectorAll<HTMLButtonElement>('.filtro');
+    const tarjetas = document.querySelectorAll<HTMLElement>('#rejilla .mision');
+    const sinResultados = document.getElementById('sin-resultados');
+    let filtro = 'todos';
+
+    const aplicar = () => {
+      const texto = (buscar?.value || '').toLowerCase().trim();
+      let visibles = 0;
+      tarjetas.forEach((t) => {
+        const ok = (filtro === 'todos' || t.dataset.lenguaje === filtro) && (t.dataset.nombre || '').includes(texto);
+        t.style.display = ok ? '' : 'none';
+        if (ok) { visibles++; t.classList.add('visible'); }
+      });
+      if (sinResultados) sinResultados.hidden = visibles > 0 || tarjetas.length === 0;
+    };
+
+    botones.forEach((b) => b.addEventListener('click', () => {
+      botones.forEach((x) => x.classList.remove('activo'));
+      b.classList.add('activo');
+      filtro = b.dataset.filtro || 'todos';
+      aplicar();
+    }));
+    buscar?.addEventListener('input', aplicar);
+  }
+  document.addEventListener('astro:page-load', iniciarTablon);
+</script>
+
+<style>
+  .cabecera { padding-top: 8rem; }
+  .intro { color: var(--texto-suave); margin: -1rem 0 2rem; font-size: 1.05rem; }
+  .controles { display: grid; gap: 1rem; margin-bottom: 2.5rem; padding: 1.25rem; }
+  input {
+    width: 100%; padding: .75rem 1rem; font: inherit; color: var(--texto);
+    background: rgba(0, 0, 0, .35); border: 2px solid var(--borde); border-radius: 6px;
+  }
+  input:focus { outline: none; border-color: var(--oro); }
+  .filtros { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .filtro {
+    display: inline-flex; align-items: center; gap: .45rem;
+    padding: .4rem .9rem; font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer;
+    color: var(--texto-suave); background: rgba(0, 0, 0, .3); border: 2px solid var(--borde); border-radius: 6px;
+    transition: all .15s;
+  }
+  .filtro span:not(.punto) { font-family: var(--fuente-mono); font-size: .75rem; color: var(--oro); }
+  .filtro:hover { color: var(--texto); border-color: var(--borde-claro); }
+  .filtro.activo { color: #2a1a00; background: var(--oro); border-color: var(--oro); }
+  .filtro.activo span:not(.punto) { color: #2a1a00; }
+  .punto { width: 9px; height: 9px; border-radius: 50%; background: var(--color); }
+  .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+  .vacio { color: var(--texto-suave); text-align: center; padding: 2rem; }
+</style>

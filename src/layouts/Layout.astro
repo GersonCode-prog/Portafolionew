@@ -1,0 +1,91 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Sakura from '../components/Sakura.astro';
+import '@fontsource/chakra-petch/500.css';
+import '@fontsource/chakra-petch/700.css';
+import '@fontsource-variable/exo-2';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/global.css';
+
+interface Props {
+  titulo: string;
+  descripcion?: string;
+}
+const { titulo, descripcion = 'Gerson Batún — Ingeniero en Sistemas. Portafolio estilo RPG.' } = Astro.props;
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={descripcion} />
+    <meta property="og:title" content={`${titulo} | Gerson Dev Quest`} />
+    <meta property="og:description" content={descripcion} />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>" />
+    <title>{titulo} | Gerson Dev Quest</title>
+    <ClientRouter />
+  </head>
+  <body>
+    <Sakura />
+    <Header />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      // ---- Aparición al hacer scroll ----
+      function iniciarRevelar() {
+        const observador = new IntersectionObserver((entradas) => {
+          entradas.forEach((e) => {
+            if (!e.isIntersecting) return;
+            e.target.classList.add('visible');
+            // Llena las barras que estén dentro del elemento
+            e.target.querySelectorAll<HTMLElement>('[data-valor]').forEach((b) => {
+              b.style.width = `${b.dataset.valor}%`;
+            });
+            observador.unobserve(e.target);
+          });
+        }, { threshold: 0.15 });
+        document.querySelectorAll('.revelar').forEach((el) => observador.observe(el));
+      }
+      document.addEventListener('astro:page-load', iniciarRevelar);
+
+      // ---- Efectos de sonido estilo 8-bit (apagados por defecto) ----
+      const w = window as any;
+      if (!w.sfxListo) {
+        w.sfxListo = true;
+        let audio: AudioContext | null = null;
+        const sonar = (frecuencia: number, duracion = 0.06) => {
+          let activo = false;
+          try { activo = localStorage.getItem('sfx') === 'on'; } catch (e) {}
+          if (!activo) return;
+          audio ??= new AudioContext();
+          const osc = audio.createOscillator();
+          const vol = audio.createGain();
+          osc.type = 'square';
+          osc.frequency.value = frecuencia;
+          vol.gain.setValueAtTime(0.04, audio.currentTime);
+          vol.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + duracion);
+          osc.connect(vol).connect(audio.destination);
+          osc.start();
+          osc.stop(audio.currentTime + duracion);
+        };
+        w.sonar = sonar;
+        document.addEventListener('pointerover', (e) => {
+          const el = (e.target as HTMLElement).closest('a, button');
+          if (el && !el.contains(e.relatedTarget as Node)) sonar(880);
+        });
+        document.addEventListener('click', (e) => {
+          if ((e.target as HTMLElement).closest('a, button')) sonar(1320, 0.1);
+        });
+      }
+    </script>
+
+    <style>
+      main { position: relative; z-index: 1; }
+    </style>
+  </body>
+</html>

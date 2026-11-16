@@ -1,44 +1,36 @@
-# Astro Starter Kit: Minimal
+# ⚔️ Gerson Quest — Portafolio estilo RPG
 
-```sh
-npm create astro@latest -- --template minimal
-```
+Portafolio personal de **Gerson Batún**, Ingeniero en Sistemas, con estilo de menú de RPG/anime.
+Hecho con [Astro](https://astro.build).
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+🌐 **Sitio:** https://gersoncode-prog.github.io/Portafolionew/
 
-## 🚀 Project Structure
+## ✨ Características
 
-Inside of your Astro project, you'll see the following folders and files:
+- Pantalla de título con pétalos de sakura y "PRESS START"
+- Ventana de estado de personaje: nivel, HP/MP/XP y stats de habilidades
+- Caja de diálogo estilo novela visual
+- Logros desbloqueados
+- **Misiones automáticas desde GitHub**: cada repositorio público se convierte en una misión
+  con rango (S/A/B/C), elemento (lenguaje) y su README como registro
+- Efectos de sonido 8-bit opcionales
+- Transiciones suaves entre páginas
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+## 🎮 Comandos
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+| Comando           | Acción                                                  |
+| :---------------- | :------------------------------------------------------ |
+| `npm install`     | Instala las dependencias                                |
+| `npm run dev`     | Servidor local en `http://localhost:4321/Portafolionew/` |
+| `npm run build`   | Compila el sitio en `./dist/`                           |
+| `npm run preview` | Muestra el sitio compilado                              |
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+## 🛠️ Personalizar
 
-Any static assets, like images, can be placed in the `public/` directory.
+Todos los datos del personaje (nivel, stats, logros, diálogo) están en `src/config.ts`.
 
-## 🧞 Commands
+## 🚀 Publicación
 
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
-"# Portafolionew" 
+Se publica solo en GitHub Pages con GitHub Actions (`.github/workflows/deploy.yml`):
+cada vez que se sube un cambio a `main` y todos los días a las 6:00 a. m. (hora de Guatemala),
+para traer los repositorios nuevos.

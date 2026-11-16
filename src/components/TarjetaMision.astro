@@ -1,0 +1,60 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { colorLenguaje, rango, nombreBonito, fechaCorta, ruta } from '../utils';
+
+interface Props { mision: CollectionEntry<'misiones'> }
+const { mision } = Astro.props;
+const d = mision.data;
+const r = rango(d.estrellas, d.forks);
+---
+<a href={ruta(`/misiones/${mision.id}`)} class="mision revelar" data-lenguaje={d.lenguaje ?? 'Otro'} data-nombre={d.nombre.toLowerCase()}>
+  <div class="cabecera">
+    <span class={`rango rango-${r}`} transition:name={`rango-${mision.id}`}><span>{r}</span></span>
+    <span class="elemento" style={`--color:${colorLenguaje(d.lenguaje)}`}>
+      <span class="punto"></span>{d.lenguaje ?? 'Otro'}
+    </span>
+  </div>
+
+  <h3>{nombreBonito(d.nombre)}</h3>
+  <p class="descripcion">{d.descripcion || 'Misión sin descripción... ¡aún por descubrir!'}</p>
+
+  <div class="pie">
+    <span title="Estrellas">★ {d.estrellas}</span>
+    <span title="Forks">⑂ {d.forks}</span>
+    <span class="fecha">{fechaCorta(d.actualizado)}</span>
+  </div>
+  <span class="aceptar">Aceptar misión ▶</span>
+</a>
+
+<style>
+  .mision {
+    position: relative; display: flex; flex-direction: column;
+    padding: 1.4rem; background: linear-gradient(180deg, rgba(40, 34, 110, .75), var(--panel));
+    border: 2px solid var(--borde); border-radius: 10px;
+    transition: border-color .2s, transform .2s, box-shadow .2s, opacity .7s ease;
+  }
+  .mision::before { content: '▶'; position: absolute; left: -1.4rem; top: 1.6rem; color: var(--oro); opacity: 0; transition: opacity .15s, left .15s; }
+  .mision:hover { border-color: var(--oro); transform: translateY(-4px); box-shadow: 0 0 25px rgba(255, 204, 77, .2); }
+  .mision:hover::before { opacity: 1; left: -1.2rem; }
+
+  .cabecera { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .rango {
+    width: 38px; height: 38px; display: grid; place-items: center;
+    font-family: var(--fuente-titulo); font-weight: 700; font-size: 1.15rem;
+    border: 2px solid currentColor; transform: rotate(45deg);
+  }
+  .rango-S { color: var(--oro); box-shadow: 0 0 15px var(--oro); }
+  .rango-A { color: var(--rosa); }
+  .rango-B { color: var(--cian); }
+  .rango-C { color: var(--texto-suave); }
+  .rango > span { transform: rotate(-45deg); line-height: 1; }
+  .elemento { display: inline-flex; align-items: center; gap: .4rem; font-family: var(--fuente-mono); font-size: .78rem; color: var(--texto-suave); }
+  .punto { width: 10px; height: 10px; border-radius: 50%; background: var(--color); box-shadow: 0 0 8px var(--color); }
+
+  h3 { font-size: 1.25rem; margin-bottom: .5rem; word-break: break-word; }
+  .descripcion { color: var(--texto-suave); font-size: .93rem; margin-bottom: 1.1rem; flex: 1; }
+  .pie { display: flex; gap: 1rem; font-family: var(--fuente-mono); font-size: .8rem; color: var(--texto-suave); margin-bottom: 1rem; }
+  .pie span:first-child { color: var(--oro); }
+  .fecha { margin-left: auto; }
+  .aceptar { font-family: var(--fuente-titulo); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: .9rem; color: var(--oro); }
+</style>

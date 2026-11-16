@@ -1,0 +1,16 @@
+# Dependencias
+node_modules/
+
+# Sitio compilado
+dist/
+
+# Archivos generados por Astro
+.astro/
+
+# Variables de entorno (tokens, contraseñas)
+.env
+.env.*
+
+# Sistema
+.DS_Store
+Thumbs.db

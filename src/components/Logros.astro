@@ -1,0 +1,42 @@
+---
+import { logros } from '../config';
+---
+<section class="seccion contenedor" id="logros">
+  <div class="titulo-seccion revelar">
+    <h2>Logros</h2><span class="jp">実績</span>
+  </div>
+
+  <div class="rejilla">
+    {logros.map((l, i) => (
+      <div class:list={['logro', 'revelar', { bloqueado: l.bloqueado }]} style={`transition-delay:${i * 80}ms`}>
+        <span class="icono">{l.icono}</span>
+        <div>
+          <p class="nombre">{l.nombre}</p>
+          <p class="detalle">{l.detalle}</p>
+        </div>
+        {!l.bloqueado && <span class="check">✓</span>}
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+  .logro {
+    position: relative; display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: center;
+    padding: 1rem 1.2rem; background: var(--panel); border: 2px solid var(--borde); border-radius: 8px;
+    transition: border-color .2s, transform .2s, opacity .7s ease;
+  }
+  .logro:hover { border-color: var(--oro); transform: translateY(-3px); }
+  .icono {
+    width: 56px; height: 56px; display: grid; place-items: center; font-size: 1.7rem;
+    background: radial-gradient(circle, rgba(255, 204, 77, .3), transparent 70%);
+    border: 2px solid var(--oro); border-radius: 50%;
+    box-shadow: 0 0 15px rgba(255, 204, 77, .3);
+  }
+  .nombre { font-family: var(--fuente-titulo); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .detalle { color: var(--texto-suave); font-size: .88rem; }
+  .check { position: absolute; top: .5rem; right: .7rem; color: var(--verde); font-weight: 700; }
+  .bloqueado { opacity: .55; filter: grayscale(1); }
+  .bloqueado .icono { border-color: var(--borde); box-shadow: none; }
+</style>

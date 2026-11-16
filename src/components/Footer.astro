@@ -1,0 +1,18 @@
+---
+import { USUARIO_GITHUB } from '../config';
+const anio = new Date().getFullYear();
+---
+<footer>
+  <div class="contenedor">
+    <p><span class="guardado">💾 Partida guardada</span> &copy; {anio} Gerson Batún · Hecho con Astro</p>
+    <a href={`https://github.com/${USUARIO_GITHUB}`} target="_blank" rel="noopener" class="github">GitHub ↗</a>
+  </div>
+</footer>
+
+<style>
+  footer { position: relative; z-index: 1; border-top: 2px solid var(--borde); background: rgba(10, 8, 32, .7); padding: 1.6rem 0; }
+  div { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  p { color: var(--texto-suave); font-size: .9rem; }
+  .guardado { color: var(--verde); font-family: var(--fuente-mono); font-size: .8rem; margin-right: .6rem; }
+  .github { font-family: var(--fuente-titulo); font-weight: 700; color: var(--oro); }
+</style>

@@ -1,0 +1,132 @@
+---
+import { ruta } from '../utils';
+const enlaces = [
+  { texto: 'Inicio', jp: 'ホーム', url: ruta('/') },
+  { texto: 'Misiones', jp: 'クエスト', url: ruta('/misiones') },
+  { texto: 'Party', jp: 'パーティー', url: ruta('/contacto') },
+];
+---
+<header id="header" transition:persist>
+  <nav class="contenedor">
+    <a href={ruta('/')} class="logo">
+      <span class="emblema"><span>⚔</span></span>
+      <span class="logo-texto">
+        GERSON<span class="dorado">◆</span>QUEST
+        <small>ゲルソン・クエスト</small>
+      </span>
+    </a>
+
+    <ul id="menu" class="ventana-menu">
+      {enlaces.map((e) => (
+        <li>
+          <a href={e.url} class="comando" data-ruta={e.url}>
+            <span class="cursor">▶</span>
+            <span>{e.texto}<small>{e.jp}</small></span>
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <div class="acciones">
+      <button id="btn-sfx" class="icono-btn" aria-label="Activar o desactivar sonido" title="Sonido">
+        <span class="sfx-off">🔇</span><span class="sfx-on">🔊</span>
+      </button>
+      <button id="btn-menu" class="icono-btn" aria-label="Abrir menú">☰</button>
+    </div>
+  </nav>
+</header>
+
+<script>
+  function marcarActivo() {
+    const limpiar = (r: string) => r.replace(/\/$/, '');
+    const actual = limpiar(location.pathname);
+    const comandos = [...document.querySelectorAll<HTMLElement>('.comando')];
+    const inicio = limpiar(comandos[0]?.dataset.ruta || '/');
+    comandos.forEach((a) => {
+      const url = limpiar(a.dataset.ruta || '/');
+      a.classList.toggle('activo', url === inicio ? actual === inicio : actual.startsWith(url));
+    });
+    document.getElementById('menu')?.classList.remove('abierto');
+    document.getElementById('header')?.classList.toggle('con-fondo', scrollY > 20);
+  }
+
+  function pintarSfx() {
+    let on = false;
+    try { on = localStorage.getItem('sfx') === 'on'; } catch (e) {}
+    document.getElementById('btn-sfx')?.classList.toggle('on', on);
+  }
+
+  const w = window as any;
+  if (!w.headerListo) {
+    w.headerListo = true;
+    addEventListener('scroll', () => {
+      document.getElementById('header')?.classList.toggle('con-fondo', scrollY > 20);
+    });
+    document.addEventListener('click', (e) => {
+      const el = e.target as HTMLElement;
+      if (el.closest('#btn-menu')) document.getElementById('menu')?.classList.toggle('abierto');
+      if (el.closest('#btn-sfx')) {
+        let on = false;
+        try { on = localStorage.getItem('sfx') === 'on'; } catch (err) {}
+        try { localStorage.setItem('sfx', on ? 'off' : 'on'); } catch (err) {}
+        pintarSfx();
+        if (!on) w.sonar?.(660, 0.15);
+      }
+    });
+  }
+
+  document.addEventListener('astro:page-load', () => { marcarActivo(); pintarSfx(); });
+</script>
+
+<style>
+  header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; transition: background .3s, border-color .3s; border-bottom: 2px solid transparent; }
+  header.con-fondo { background: rgba(10, 8, 32, .85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom-color: var(--borde); }
+  nav { display: flex; align-items: center; justify-content: space-between; height: 76px; gap: 1rem; }
+
+  .logo { display: flex; align-items: center; gap: .7rem; }
+  .emblema {
+    display: grid; place-items: center; width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--morado), var(--rosa));
+    border: 2px solid var(--oro); transform: rotate(45deg);
+    font-size: 1.1rem; box-shadow: 0 0 15px rgba(255, 95, 162, .5);
+  }
+  .emblema > span { transform: rotate(-45deg); line-height: 1; }
+  .logo-texto { font-family: var(--fuente-titulo); font-weight: 700; font-size: 1.15rem; letter-spacing: .08em; line-height: 1.1; }
+  .logo-texto small { display: block; font-family: var(--fuente-jp); font-size: .62rem; color: var(--rosa); letter-spacing: .25em; font-weight: 400; }
+  .dorado { color: var(--oro); margin: 0 .15rem; }
+
+  .ventana-menu {
+    display: flex; list-style: none; gap: .25rem; padding: .3rem;
+    background: var(--panel); border: 2px solid var(--borde); border-radius: 8px;
+  }
+  .comando {
+    display: flex; align-items: center; gap: .35rem;
+    padding: .35rem .9rem .35rem .5rem; border-radius: 5px;
+    font-family: var(--fuente-titulo); font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--texto-suave); transition: color .15s, background .15s;
+  }
+  .comando small { display: block; font-family: var(--fuente-jp); font-size: .58rem; letter-spacing: .15em; color: var(--texto-suave); opacity: .7; font-weight: 400; }
+  .cursor { color: var(--oro); opacity: 0; transform: translateX(-4px); transition: all .15s; font-size: .8rem; }
+  .comando:hover, .comando.activo { color: var(--texto); background: var(--panel-claro); }
+  .comando:hover .cursor, .comando.activo .cursor { opacity: 1; transform: none; animation: latido .8s ease-in-out infinite; }
+  @keyframes latido { 50% { transform: translateX(3px); } }
+
+  .acciones { display: flex; gap: .5rem; }
+  .icono-btn {
+    width: 42px; height: 42px; display: grid; place-items: center;
+    background: var(--panel); border: 2px solid var(--borde); border-radius: 8px;
+    color: var(--texto); font-size: 1.1rem; cursor: pointer; transition: border-color .15s;
+  }
+  .icono-btn:hover { border-color: var(--oro); }
+  .sfx-on { display: none; }
+  #btn-sfx.on .sfx-on { display: inline; }
+  #btn-sfx.on .sfx-off { display: none; }
+  #btn-menu { display: none; }
+
+  @media (max-width: 760px) {
+    #btn-menu { display: grid; }
+    .ventana-menu { display: none; position: absolute; top: 80px; left: 1.25rem; right: 1.25rem; flex-direction: column; padding: .6rem; box-shadow: 0 15px 40px rgba(0,0,0,.6); }
+    .ventana-menu.abierto { display: flex; }
+    .logo-texto small { display: none; }
+  }
+</style>

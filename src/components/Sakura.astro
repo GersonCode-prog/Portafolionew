@@ -1,0 +1,59 @@
+<canvas id="sakura" aria-hidden="true" transition:persist></canvas>
+
+<script>
+  // Pétalos de sakura cayendo (se inicia una sola vez y sigue entre páginas)
+  const w = window as any;
+  if (!w.sakuraLista && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    w.sakuraLista = true;
+    const canvas = document.getElementById('sakura') as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d')!;
+    const petalos = Array.from({ length: 28 }, () => nuevoPetalo(true));
+
+    function nuevoPetalo(inicio = false) {
+      return {
+        x: Math.random() * innerWidth,
+        y: inicio ? Math.random() * innerHeight : -20,
+        tam: 6 + Math.random() * 8,
+        velY: 0.4 + Math.random() * 0.9,
+        velX: -0.3 + Math.random() * 0.8,
+        giro: Math.random() * Math.PI * 2,
+        velGiro: -0.02 + Math.random() * 0.04,
+        balanceo: Math.random() * Math.PI * 2,
+      };
+    }
+
+    function ajustar() { canvas.width = innerWidth; canvas.height = innerHeight; }
+    addEventListener('resize', ajustar);
+    ajustar();
+
+    function dibujar() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      petalos.forEach((p, i) => {
+        p.balanceo += 0.02;
+        p.x += p.velX + Math.sin(p.balanceo) * 0.5;
+        p.y += p.velY;
+        p.giro += p.velGiro;
+        if (p.y > canvas.height + 20) petalos[i] = nuevoPetalo();
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.giro);
+        ctx.globalAlpha = 0.75;
+        const g = ctx.createLinearGradient(-p.tam, 0, p.tam, 0);
+        g.addColorStop(0, '#ffc2dc');
+        g.addColorStop(1, '#ff7eb6');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.tam, p.tam * 0.55, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+      requestAnimationFrame(dibujar);
+    }
+    dibujar();
+  }
+</script>
+
+<style>
+  canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+</style>

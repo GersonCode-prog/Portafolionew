@@ -1,0 +1,93 @@
+---
+import { dialogo, jugador } from '../config';
+import { getEntry } from 'astro:content';
+const perfil = await getEntry('perfil', 'yo');
+---
+<section class="contenedor seccion-dialogo">
+  <div class="caja revelar" id="caja-dialogo" data-lineas={JSON.stringify(dialogo)} role="button" tabindex="0" aria-label="Siguiente diálogo">
+    <div class="retrato">
+      {perfil ? <img src={perfil.data.avatar} alt="" width="90" height="90" /> : <span>👤</span>}
+    </div>
+    <div class="texto">
+      <span class="placa">{jugador.nombre.split(' ')[0]}</span>
+      <p id="linea-dialogo">{dialogo[0]}</p>
+      <span class="siguiente">▼</span>
+    </div>
+  </div>
+  <p class="pista">Haz clic en el cuadro para continuar</p>
+</section>
+
+<script>
+  function iniciarDialogo() {
+    const caja = document.getElementById('caja-dialogo');
+    const p = document.getElementById('linea-dialogo');
+    if (!caja || !p) return;
+    const lineas: string[] = JSON.parse(caja.dataset.lineas || '[]');
+    let indice = 0;
+    let escribiendo: ReturnType<typeof setInterval> | undefined;
+
+    const escribir = (texto: string) => {
+      clearInterval(escribiendo);
+      let i = 0;
+      p.textContent = '';
+      caja.classList.add('escribiendo');
+      escribiendo = setInterval(() => {
+        p.textContent = texto.slice(0, ++i);
+        if (i >= texto.length) { clearInterval(escribiendo); caja.classList.remove('escribiendo'); }
+      }, 28);
+    };
+
+    const avanzar = () => {
+      if (caja.classList.contains('escribiendo')) {
+        clearInterval(escribiendo);
+        p.textContent = lineas[indice];
+        caja.classList.remove('escribiendo');
+        return;
+      }
+      indice = (indice + 1) % lineas.length;
+      escribir(lineas[indice]);
+    };
+
+    caja.addEventListener('click', avanzar);
+    caja.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); avanzar(); } });
+
+    // Escribe la primera línea cuando aparece en pantalla
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { escribir(lineas[0]); obs.disconnect(); }
+    }, { threshold: 0.6 });
+    obs.observe(caja);
+  }
+  document.addEventListener('astro:page-load', iniciarDialogo);
+</script>
+
+<style>
+  .seccion-dialogo { padding: 2rem 0 4rem; }
+  .caja {
+    display: grid; grid-template-columns: auto 1fr; gap: 1.5rem; align-items: center;
+    padding: 1.5rem 1.75rem; cursor: pointer; user-select: none;
+    background: linear-gradient(180deg, rgba(20, 16, 60, .95), rgba(10, 8, 32, .95));
+    border: 3px solid #fff; border-radius: 14px;
+    box-shadow: 0 0 0 3px var(--morado), 0 15px 40px rgba(0, 0, 0, .55);
+  }
+  .caja:focus-visible { outline: 3px solid var(--oro); outline-offset: 4px; }
+  .retrato { width: 90px; height: 90px; border-radius: 50%; overflow: hidden; border: 3px solid var(--rosa); display: grid; place-items: center; background: var(--fondo-2); font-size: 2.5rem; }
+  .retrato img { width: 100%; height: 100%; object-fit: cover; }
+  .texto { position: relative; min-height: 90px; padding-top: .5rem; }
+  .placa {
+    position: absolute; top: -2.6rem; left: 0;
+    background: linear-gradient(90deg, var(--rosa), var(--morado));
+    padding: .25rem 1.2rem; font-family: var(--fuente-titulo); font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
+    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  }
+  #linea-dialogo { font-size: clamp(1rem, 2.2vw, 1.2rem); line-height: 1.7; }
+  .siguiente { position: absolute; right: 0; bottom: -.5rem; color: var(--oro); animation: rebote .8s ease-in-out infinite; }
+  .caja.escribiendo .siguiente { opacity: 0; }
+  @keyframes rebote { 50% { transform: translateY(4px); } }
+  .pista { text-align: center; margin-top: .8rem; font-family: var(--fuente-mono); font-size: .75rem; color: var(--texto-suave); }
+
+  @media (max-width: 560px) {
+    .caja { grid-template-columns: 1fr; text-align: left; padding-top: 2.5rem; }
+    .retrato { width: 60px; height: 60px; position: absolute; top: -30px; right: 20px; }
+    .caja { position: relative; }
+  }
+</style>

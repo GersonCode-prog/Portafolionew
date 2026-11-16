@@ -1,0 +1,50 @@
+---
+import { ruta } from '../utils';
+import Layout from '../layouts/Layout.astro';
+import PantallaTitulo from '../components/PantallaTitulo.astro';
+import Estado from '../components/Estado.astro';
+import Dialogo from '../components/Dialogo.astro';
+import Logros from '../components/Logros.astro';
+import TarjetaMision from '../components/TarjetaMision.astro';
+import { getCollection } from 'astro:content';
+
+// Las 3 misiones destacadas: más estrellas y, en empate, la más reciente
+const destacadas = (await getCollection('misiones'))
+  .sort((a, b) => b.data.estrellas - a.data.estrellas || b.data.actualizado.valueOf() - a.data.actualizado.valueOf())
+  .slice(0, 3);
+---
+<Layout titulo="Inicio">
+  <PantallaTitulo />
+  <Dialogo />
+  <Estado />
+
+  <section class="seccion contenedor">
+    <div class="encabezado">
+      <div class="titulo-seccion revelar"><h2>Misiones destacadas</h2><span class="jp">クエスト</span></div>
+      <a href={ruta('/misiones')} class="boton boton-secundario revelar">Ver todas ▶</a>
+    </div>
+    {destacadas.length > 0
+      ? <div class="rejilla">{destacadas.map((m) => <TarjetaMision mision={m} />)}</div>
+      : <p class="vacio ventana">No se pudieron cargar las misiones de GitHub. Intenta de nuevo más tarde.</p>}
+  </section>
+
+  <Logros />
+
+  <section class="seccion contenedor">
+    <div class="ventana invitacion revelar">
+      <p class="jp">新しい仲間</p>
+      <h2>¿Buscas un aliado para tu próxima aventura?</h2>
+      <p>Mi party siempre tiene espacio para un buen proyecto.</p>
+      <a href={ruta('/contacto')} class="boton">Enviar invitación ▶</a>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .encabezado { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+  .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+  .vacio { color: var(--texto-suave); text-align: center; }
+  .invitacion { text-align: center; padding: 3.5rem 2rem; background: linear-gradient(135deg, rgba(124, 92, 255, .55), rgba(255, 95, 162, .35)), var(--panel); }
+  .invitacion h2 { font-size: clamp(1.6rem, 4vw, 2.4rem); margin: .5rem 0; }
+  .invitacion p:not(.jp) { color: var(--texto-suave); margin-bottom: 2rem; font-size: 1.1rem; }
+</style>

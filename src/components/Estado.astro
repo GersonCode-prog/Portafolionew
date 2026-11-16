@@ -1,0 +1,105 @@
+---
+import { jugador, habilidades } from '../config';
+import { getEntry } from 'astro:content';
+
+const perfil = await getEntry('perfil', 'yo');
+const avatar = perfil?.data.avatar;
+---
+<section class="seccion contenedor" id="estado">
+  <div class="titulo-seccion revelar">
+    <h2>Estado</h2><span class="jp">ステータス</span>
+  </div>
+
+  <div class="rejilla">
+    <!-- Ficha del personaje -->
+    <div class="ventana ficha revelar">
+      <div class="marco-avatar">
+        {avatar
+          ? <img src={avatar} alt={`Avatar de ${jugador.nombre}`} width="160" height="160" />
+          : <span class="sin-avatar">👤</span>}
+        <span class="nivel">LV {jugador.nivel}</span>
+      </div>
+
+      <div class="datos">
+        <p class="etq">Jugador</p>
+        <h3>{jugador.nombre}</h3>
+        <p class="clase">{jugador.clase}</p>
+        <p class="titulo-jugador">«{jugador.titulo}»</p>
+
+        <div class="medidor">
+          <span class="medidor-nombre">HP</span>
+          <div class="barra"><div class="barra-relleno verde" data-valor="100"></div></div>
+          <span class="medidor-valor">☕ ∞</span>
+        </div>
+        <div class="medidor">
+          <span class="medidor-nombre">MP</span>
+          <div class="barra"><div class="barra-relleno cian" data-valor="92"></div></div>
+          <span class="medidor-valor">92/100</span>
+        </div>
+        <div class="medidor">
+          <span class="medidor-nombre">XP</span>
+          <div class="barra"><div class="barra-relleno oro" data-valor={jugador.xp}></div></div>
+          <span class="medidor-valor">{jugador.xp}%</span>
+        </div>
+
+        <dl>
+          <div><dt>Gremio</dt><dd>{jugador.gremio}</dd></div>
+          {perfil && <div><dt>Misiones</dt><dd>{perfil.data.repos} repos públicos</dd></div>}
+          {perfil && <div><dt>Aliados</dt><dd>{perfil.data.seguidores} seguidores</dd></div>}
+        </dl>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="ventana stats revelar">
+      <p class="etq">Habilidades <span class="jp">スキル</span></p>
+      <ul>
+        {habilidades.map((h) => (
+          <li>
+            <div class="stat-cabecera">
+              <span>{h.nombre}</span>
+              <span class="stat-valor">{h.valor}</span>
+            </div>
+            <div class="barra"><div class={`barra-relleno ${h.color}`} data-valor={h.valor}></div></div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .rejilla { display: grid; grid-template-columns: 1.3fr 1fr; gap: 1.75rem; }
+
+  .ficha { display: grid; grid-template-columns: auto 1fr; gap: 1.75rem; align-items: start; }
+  .marco-avatar { position: relative; width: 160px; height: 160px; padding: 5px; background: linear-gradient(135deg, var(--oro), var(--rosa), var(--morado)); clip-path: polygon(15% 0, 100% 0, 100% 85%, 85% 100%, 0 100%, 0 15%); }
+  .marco-avatar img, .sin-avatar { width: 100%; height: 100%; object-fit: cover; clip-path: inherit; background: var(--fondo-2); }
+  .sin-avatar { display: grid; place-items: center; font-size: 4rem; }
+  .nivel { position: absolute; bottom: 8px; left: 8px; background: var(--fondo); border: 2px solid var(--oro); color: var(--oro); font-family: var(--fuente-titulo); font-weight: 700; font-size: .85rem; padding: .1rem .5rem; }
+
+  .etq { font-family: var(--fuente-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .15em; color: var(--texto-suave); margin-bottom: .2rem; }
+  .etq .jp { font-size: .7rem; margin-left: .4rem; }
+  h3 { font-size: 1.7rem; }
+  .clase { color: var(--cian); font-weight: 600; }
+  .titulo-jugador { color: var(--oro); font-style: italic; margin-bottom: 1.1rem; font-size: .95rem; }
+
+  .medidor { display: grid; grid-template-columns: 30px 1fr 70px; align-items: center; gap: .6rem; margin-bottom: .55rem; }
+  .medidor-nombre { font-family: var(--fuente-titulo); font-weight: 700; color: var(--oro); }
+  .medidor-valor { font-family: var(--fuente-mono); font-size: .78rem; color: var(--texto-suave); text-align: right; }
+
+  dl { margin-top: 1.1rem; display: grid; gap: .3rem; font-size: .9rem; }
+  dl div { display: flex; gap: .6rem; }
+  dt { color: var(--texto-suave); min-width: 75px; }
+  dt::after { content: ':'; }
+
+  .stats ul { list-style: none; display: grid; gap: 1rem; margin-top: 1rem; }
+  .stat-cabecera { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: .3rem; }
+  .stat-valor { font-family: var(--fuente-titulo); color: var(--oro); }
+
+  @media (max-width: 900px) { .rejilla { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) {
+    .ficha { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+    .datos { width: 100%; }
+    dl div { justify-content: center; }
+  }
+</style>

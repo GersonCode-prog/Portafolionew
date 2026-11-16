@@ -1,0 +1,118 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import { colorLenguaje, rango, nombreBonito, fechaCorta, ruta } from '../../utils';
+
+export async function getStaticPaths() {
+  const misiones = (await getCollection('misiones'))
+    .sort((a, b) => b.data.actualizado.valueOf() - a.data.actualizado.valueOf());
+  return misiones.map((m, i) => ({
+    params: { id: m.id },
+    props: { mision: m, siguiente: misiones[(i + 1) % misiones.length] },
+  }));
+}
+
+const { mision, siguiente } = Astro.props;
+const d = mision.data;
+const r = rango(d.estrellas, d.forks);
+const recompensas: Record<string, string> = { S: '10,000 XP', A: '5,000 XP', B: '2,500 XP', C: '1,000 XP' };
+---
+<Layout titulo={nombreBonito(d.nombre)} descripcion={d.descripcion || `Misión ${d.nombre}`}>
+  <article class="contenedor">
+    <a href={ruta('/misiones')} class="volver">◀ Volver al tablón</a>
+
+    <header class="cabecera">
+      <span class={`rango rango-${r}`} transition:name={`rango-${mision.id}`}><span>{r}</span></span>
+      <div>
+        <p class="etq">Misión de rango {r}</p>
+        <h1>{nombreBonito(d.nombre)}</h1>
+        <p class="descripcion">{d.descripcion || 'Misión sin descripción... ¡aún por descubrir!'}</p>
+      </div>
+    </header>
+
+    <div class="ventana info">
+      <div><p class="etq">Elemento</p><p class="elemento" style={`--color:${colorLenguaje(d.lenguaje)}`}><span class="punto"></span>{d.lenguaje ?? 'Otro'}</p></div>
+      <div><p class="etq">Recompensa</p><p class="oro">{recompensas[r]}</p></div>
+      <div><p class="etq">Estrellas / Forks</p><p>★ {d.estrellas} · ⑂ {d.forks}</p></div>
+      <div><p class="etq">Iniciada</p><p>{fechaCorta(d.creado)}</p></div>
+      <div><p class="etq">Última actividad</p><p>{fechaCorta(d.actualizado)}</p></div>
+      {d.temas.length > 0 && (
+        <div class="temas"><p class="etq">Etiquetas</p><div>{d.temas.map((t) => <span class="etiqueta">#{t}</span>)}</div></div>
+      )}
+      <div class="botones">
+        <a href={d.url} target="_blank" rel="noopener" class="boton">Ver en GitHub ↗</a>
+        {d.demo && <a href={d.demo} target="_blank" rel="noopener" class="boton boton-secundario">Jugar demo ▶</a>}
+      </div>
+    </div>
+
+    <section class="ventana registro">
+      <p class="etq titulo-registro">📜 Registro de la misión (README) <span class="jp">記録</span></p>
+      {d.readme
+        ? <div class="markdown" set:html={d.readme} />
+        : <p class="sin-readme">Esta misión aún no tiene README.</p>}
+    </section>
+
+    {siguiente.id !== mision.id && (
+      <a href={ruta(`/misiones/${siguiente.id}`)} class="siguiente">
+        <p class="etq">Siguiente misión</p>
+        <p class="titulo-sig">{nombreBonito(siguiente.data.nombre)} ▶</p>
+      </a>
+    )}
+  </article>
+</Layout>
+
+<style>
+  article { padding: 7.5rem 0 4rem; max-width: 900px; }
+  .volver { font-family: var(--fuente-titulo); font-weight: 700; text-transform: uppercase; color: var(--texto-suave); letter-spacing: .06em; }
+  .volver:hover { color: var(--oro); }
+
+  .cabecera { display: flex; gap: 2rem; align-items: center; margin: 2rem 0; }
+  .rango {
+    flex-shrink: 0; width: 80px; height: 80px; display: grid; place-items: center;
+    font-family: var(--fuente-titulo); font-weight: 700; font-size: 2.3rem;
+    border: 3px solid currentColor; transform: rotate(45deg); margin: 1rem;
+  }
+  .rango > span { transform: rotate(-45deg); line-height: 1; }
+  .rango-S { color: var(--oro); box-shadow: 0 0 25px var(--oro); }
+  .rango-A { color: var(--rosa); box-shadow: 0 0 20px var(--rosa); }
+  .rango-B { color: var(--cian); box-shadow: 0 0 20px var(--cian); }
+  .rango-C { color: var(--texto-suave); }
+  h1 { font-size: clamp(2rem, 5vw, 3rem); word-break: break-word; }
+  .descripcion { color: var(--texto-suave); font-size: 1.1rem; }
+  .etq { font-family: var(--fuente-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .15em; color: var(--texto-suave); margin-bottom: .25rem; }
+
+  .info { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+  .elemento { display: flex; align-items: center; gap: .45rem; }
+  .punto { width: 10px; height: 10px; border-radius: 50%; background: var(--color); box-shadow: 0 0 8px var(--color); }
+  .oro { color: var(--oro); font-weight: 700; }
+  .temas { grid-column: 1 / -1; }
+  .temas div { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .botones { grid-column: 1 / -1; display: flex; gap: .75rem; flex-wrap: wrap; }
+
+  .registro { margin-bottom: 2rem; }
+  .titulo-registro { margin-bottom: 1.25rem; }
+  .sin-readme { color: var(--texto-suave); }
+
+  /* Estilos del README que viene de GitHub */
+  .markdown { overflow-wrap: anywhere; }
+  .markdown :global(h1), .markdown :global(h2), .markdown :global(h3) { margin: 1.6rem 0 .8rem; text-transform: none; }
+  .markdown :global(h1) { font-size: 1.8rem; }
+  .markdown :global(h2) { font-size: 1.4rem; color: var(--oro); }
+  .markdown :global(p), .markdown :global(ul), .markdown :global(ol) { margin-bottom: 1rem; color: var(--texto-suave); }
+  .markdown :global(ul), .markdown :global(ol) { padding-left: 1.5rem; }
+  .markdown :global(a) { color: var(--cian); text-decoration: underline; }
+  .markdown :global(img) { display: inline-block; max-width: 100%; height: auto; border-radius: 6px; }
+  .markdown :global(code) { font-family: var(--fuente-mono); font-size: .85em; background: rgba(0,0,0,.4); padding: .1rem .35rem; border-radius: 4px; }
+  .markdown :global(pre) { background: rgba(0,0,0,.45); border: 1px solid var(--borde); padding: 1rem; border-radius: 6px; overflow-x: auto; margin-bottom: 1rem; }
+  .markdown :global(pre code) { background: none; padding: 0; }
+  .markdown :global(table) { border-collapse: collapse; margin-bottom: 1rem; display: block; overflow-x: auto; }
+  .markdown :global(th), .markdown :global(td) { border: 1px solid var(--borde); padding: .4rem .7rem; }
+  .markdown :global(blockquote) { border-left: 3px solid var(--rosa); padding-left: 1rem; margin-bottom: 1rem; }
+  .markdown :global(.anchor), .markdown :global(.octicon) { display: none; }
+
+  .siguiente { display: block; padding: 1.5rem; border: 2px solid var(--borde); border-radius: 10px; background: var(--panel); transition: border-color .2s; }
+  .siguiente:hover { border-color: var(--oro); }
+  .titulo-sig { font-family: var(--fuente-titulo); font-weight: 700; font-size: 1.35rem; text-transform: uppercase; }
+
+  @media (max-width: 560px) { .cabecera { flex-direction: column; align-items: flex-start; gap: 1rem; } }
+</style>
